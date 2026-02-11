@@ -25,7 +25,6 @@ button { padding:10px; margin:5px 0; background:#5865F2; color:white; border:non
 
 <h2 id="title">Connexion</h2>
 
-<!-- LOGIN -->
 <div id="loginBox">
   <input type="text" id="loginUsername" placeholder="Username">
   <input type="password" id="loginPassword" placeholder="Mot de passe">
@@ -33,7 +32,6 @@ button { padding:10px; margin:5px 0; background:#5865F2; color:white; border:non
   <p class="link" onclick="showRegister()">Pas de compte ? S'inscrire</p>
 </div>
 
-<!-- REGISTER -->
 <div id="registerBox" class="hidden">
   <input type="text" id="regNom" placeholder="Nom">
   <input type="text" id="regPrenom" placeholder="Prénom">
@@ -43,7 +41,6 @@ button { padding:10px; margin:5px 0; background:#5865F2; color:white; border:non
   <p class="link" onclick="showLogin()">Déjà un compte ? Se connecter</p>
 </div>
 
-<!-- DASHBOARD -->
 <div id="dashboard" class="hidden">
   <h3>Bienvenue <span id="userDisplay"></span></h3>
   <p>Rôle : <span id="roleDisplay"></span></p>
@@ -148,7 +145,7 @@ async function loadTickets(){
   let query = supabase.from("tickets").select("*").order("created_at",{ascending:false})
 
   if(user.role==="user" || user.role==="soldat"){ query = query.eq("user_id",user.id) }
-  else if(user.role==="sergent"){ query = query.ilike("raison","%Recrutement%") } // voit tous les tickets de recrutement/composante
+  else if(user.role==="sergent"){ query = query.ilike("raison","%Recrutement%") }
 
   const { data, error } = await query
   const container = document.getElementById("ticketsContainer")
@@ -188,13 +185,16 @@ window.sendMessage = async function(ticketId){
 }
 
 async function loadMessages(ticketId){
-  const { data } = await supabase.from("messages").select("*, sender:profiles(*)").eq("ticket_id", ticketId).order("created_at",{ascending:true})
+  const { data: messages } = await supabase.from("messages").select("*").eq("ticket_id", ticketId).order("created_at",{ascending:true})
   const container = document.getElementById("messages-"+ticketId)
   container.innerHTML=""
-  if(!data) return
+  if(!messages) return
 
-  data.forEach(msg=>{
-    const sender = msg.sender
+  for(const msg of messages){
+    // Récupération du profil du sender
+    const { data: senderData } = await supabase.from("profiles").select("*").eq("id", msg.sender_id).single()
+    const sender = senderData
+
     let roleLabel="", roleClass="user"
     if(sender.role==="officier"){ roleLabel="[CORPS DES OFFICIERS]"; roleClass="officier" }
     else if(sender.role==="sergent"){ roleLabel="[CORPS D'ENCADREMENT]"; roleClass="sergent" }
@@ -206,7 +206,7 @@ async function loadMessages(ticketId){
     messageDiv.className = "message "+roleClass
     messageDiv.innerHTML = `<div class="message-header">${sender.nom} ${sender.prenom} ${roleLabel} - ${date}</div>${msg.content}`
     container.appendChild(messageDiv)
-  })
+  }
 }
 
 // ===== AUTO LOGIN =====
