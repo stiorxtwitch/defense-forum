@@ -2,27 +2,56 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Système de Tickets</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>Defense Forum - Tickets</title>
 <style>
-body { font-family: Arial; background:#1e1e2f; color:white; }
-.container { width: 800px; margin:auto; }
-button { padding:10px; background:#5865F2; color:white; border:none; margin:5px 0; }
-input, select, textarea {
-  width:100%; padding:8px; margin:5px 0;
-  background:#2c2c3f; color:white; border:1px solid #444;
+body {
+  font-family: Arial;
+  background:#1e1e2f;
+  color:white;
 }
-.ticket { background:#2c2c3f; padding:10px; margin:10px 0; }
+.container {
+  width: 900px;
+  margin:auto;
+}
+button {
+  padding:10px;
+  background:#5865F2;
+  color:white;
+  border:none;
+  margin:5px 0;
+  cursor:pointer;
+}
+input, select, textarea {
+  width:100%;
+  padding:8px;
+  margin:5px 0;
+  background:#2c2c3f;
+  color:white;
+  border:1px solid #444;
+}
+.ticket {
+  background:#2c2c3f;
+  padding:15px;
+  margin:15px 0;
+  border-radius:8px;
+}
+.messages {
+  background:#1a1a28;
+  padding:10px;
+  margin-top:10px;
+}
 </style>
 </head>
 <body>
 
 <div class="container">
 
-<h1>🎫 Système de Tickets</h1>
+<h1>🎫 Defense Forum - Système de Tickets</h1>
 
 <button onclick="login()">Connexion Google</button>
 <button onclick="logout()">Déconnexion</button>
+
+<hr>
 
 <h2>Créer un ticket</h2>
 
@@ -40,128 +69,165 @@ input, select, textarea {
   <button type="submit">Créer Ticket</button>
 </form>
 
-<h2>Mes Tickets</h2>
+<hr>
+
+<h2>Tickets</h2>
 <div id="tickets"></div>
 
 </div>
 
-<script>
-const supabase = window.supabase.createClient(
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
+
+const supabase = createClient(
   "https://gktawbaposndfxijkxdk.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdGF3YmFwb3NuZGZ4aWpreGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzUyNDUsImV4cCI6MjA3OTY1MTI0NX0.tY-CHuyb2zr9s6hlGkwmrdTvg920VVNghI9S45CjwKk"
-);
+)
 
-async function login() {
+window.login = async function () {
   await supabase.auth.signInWithOAuth({
-    provider: 'google'
-  });
+    provider: "google"
+  })
 }
 
-async function logout() {
-  await supabase.auth.signOut();
-  location.reload();
+window.logout = async function () {
+  await supabase.auth.signOut()
+  location.reload()
 }
 
 async function getUser() {
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
+  const { data } = await supabase.auth.getUser()
+  return data.user
 }
 
 async function createProfileIfNotExists(user) {
-  const { data } = await supabase.from('profiles')
-    .select("*").eq("id", user.id);
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
 
-  if (!data.length) {
-    await supabase.from('profiles').insert({
+  if (!data || data.length === 0) {
+    await supabase.from("profiles").insert({
       id: user.id,
       email: user.email,
       role: "user"
-    });
+    })
   }
 }
 
 document.getElementById("ticketForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const user = await getUser();
-  if (!user) return alert("Connecte toi");
+  e.preventDefault()
 
-  const nom = document.getElementById("nom").value;
-  const prenom = document.getElementById("prenom").value;
-  const raison = document.getElementById("raison").value;
+  const user = await getUser()
+  if (!user) {
+    alert("Connecte-toi d'abord.")
+    return
+  }
+
+  const nom = document.getElementById("nom").value
+  const prenom = document.getElementById("prenom").value
+  const raison = document.getElementById("raison").value
 
   const { error } = await supabase.from("tickets").insert({
     user_id: user.id,
     nom,
     prenom,
     raison
-  });
+  })
 
-  if (!error) {
-    alert("Ticket créé !");
-    loadTickets();
+  if (error) {
+    alert("Erreur : " + error.message)
+  } else {
+    alert("Ticket créé avec succès !")
+    loadTickets()
   }
-});
+})
 
 async function loadTickets() {
-  const user = await getUser();
-  if (!user) return;
+  const user = await getUser()
+  if (!user) return
 
-  const { data } = await supabase.from("tickets").select("*");
+  const { data, error } = await supabase
+    .from("tickets")
+    .select("*")
+    .order("created_at", { ascending: false })
 
-  const container = document.getElementById("tickets");
-  container.innerHTML = "";
+  if (error) {
+    console.error(error)
+    return
+  }
+
+  const container = document.getElementById("tickets")
+  container.innerHTML = ""
 
   data.forEach(ticket => {
-    const div = document.createElement("div");
-    div.className = "ticket";
+    const div = document.createElement("div")
+    div.className = "ticket"
+
     div.innerHTML = `
       <b>${ticket.raison}</b><br>
       ${ticket.nom} ${ticket.prenom}<br>
       Status: ${ticket.status}<br>
+
+      <div class="messages" id="messages-${ticket.id}"></div>
+
       <textarea id="msg-${ticket.id}" placeholder="Répondre..."></textarea>
       <button onclick="sendMessage('${ticket.id}')">Envoyer</button>
-      <div id="messages-${ticket.id}"></div>
-    `;
-    container.appendChild(div);
-    loadMessages(ticket.id);
-  });
+    `
+
+    container.appendChild(div)
+    loadMessages(ticket.id)
+  })
 }
 
-async function sendMessage(ticketId) {
-  const user = await getUser();
-  const content = document.getElementById("msg-"+ticketId).value;
+window.sendMessage = async function(ticketId) {
+  const user = await getUser()
+  if (!user) return
+
+  const textarea = document.getElementById("msg-"+ticketId)
+  const content = textarea.value
+
+  if (!content) return
 
   await supabase.from("messages").insert({
     ticket_id: ticketId,
     sender_id: user.id,
     content
-  });
+  })
 
-  loadMessages(ticketId);
+  textarea.value = ""
+  loadMessages(ticketId)
 }
 
 async function loadMessages(ticketId) {
   const { data } = await supabase
     .from("messages")
     .select("*")
-    .eq("ticket_id", ticketId);
+    .eq("ticket_id", ticketId)
+    .order("created_at", { ascending: true })
 
-  const container = document.getElementById("messages-"+ticketId);
-  container.innerHTML = "";
+  const container = document.getElementById("messages-"+ticketId)
+  container.innerHTML = ""
 
   data.forEach(msg => {
-    container.innerHTML += `<p>${msg.content}</p>`;
-  });
+    container.innerHTML += `<p>💬 ${msg.content}</p>`
+  })
 }
 
 supabase.auth.onAuthStateChange(async () => {
-  const user = await getUser();
+  const user = await getUser()
   if (user) {
-    await createProfileIfNotExists(user);
-    loadTickets();
+    await createProfileIfNotExists(user)
+    loadTickets()
   }
-});
+})
 
+const user = await getUser()
+if (user) {
+  await createProfileIfNotExists(user)
+  loadTickets()
+}
 </script>
+
 </body>
 </html>
