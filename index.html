@@ -7,7 +7,9 @@
 body { font-family: Arial; background:#1e1e2f; color:white; display:flex; justify-content:center; }
 .box { background:#2c2c3f; padding:30px; width:700px; border-radius:10px; margin-top:20px; }
 input, select, textarea { width:100%; padding:8px; margin:5px 0; background:#1a1a28; color:white; border:1px solid #444; }
-button { padding:10px; margin:5px 0; background:#5865F2; color:white; border:none; cursor:pointer; }
+button { padding:10px; margin:5px 0; background:#5865F2; color:white; border:none; cursor:pointer; border-radius:4px; }
+button.delete { background:#c0392b; }
+button.delete:hover { background:#e74c3c; }
 .hidden { display:none; }
 .ticket { background:#2c2c3f; padding:15px; margin:10px 0; border-radius:8px; }
 .messages { background:#1a1a28; padding:10px; margin-top:5px; border-radius:6px; max-height:150px; overflow-y:auto; }
@@ -22,16 +24,13 @@ button { padding:10px; margin:5px 0; background:#5865F2; color:white; border:non
 </head>
 <body>
 <div class="box">
-
 <h2 id="title">Connexion</h2>
-
 <div id="loginBox">
   <input type="text" id="loginUsername" placeholder="Username">
   <input type="password" id="loginPassword" placeholder="Mot de passe">
   <button onclick="login()">Se connecter</button>
   <p class="link" onclick="showRegister()">Pas de compte ? S'inscrire</p>
 </div>
-
 <div id="registerBox" class="hidden">
   <input type="text" id="regNom" placeholder="Nom">
   <input type="text" id="regPrenom" placeholder="Prénom">
@@ -40,12 +39,10 @@ button { padding:10px; margin:5px 0; background:#5865F2; color:white; border:non
   <button onclick="register()">Créer un compte</button>
   <p class="link" onclick="showLogin()">Déjà un compte ? Se connecter</p>
 </div>
-
 <div id="dashboard" class="hidden">
   <h3>Bienvenue <span id="userDisplay"></span></h3>
   <p>Rôle : <span id="roleDisplay"></span></p>
   <button onclick="logout()">Déconnexion</button>
-
   <hr>
   <h3>Créer un ticket</h3>
   <input type="text" id="ticketNom" placeholder="Nom">
@@ -58,7 +55,6 @@ button { padding:10px; margin:5px 0; background:#5865F2; color:white; border:non
     <option value="Rejoindre une composante">Rejoindre une composante</option>
   </select>
   <button onclick="createTicket()">Créer Ticket</button>
-
   <hr>
   <h3>Tickets</h3>
   <div id="ticketsContainer"></div>
@@ -66,7 +62,11 @@ button { padding:10px; margin:5px 0; background:#5865F2; color:white; border:non
 
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
-const supabase = createClient("https://gktawbaposndfxijkxdk.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdGF3YmFwb3NuZGZ4aWpreGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzUyNDUsImV4cCI6MjA3OTY1MTI0NX0.tY-CHuyb2zr9s6hlGkwmrdTvg920VVNghI9S45CjwKk")
+
+const supabase = createClient(
+  "https://gktawbaposndfxijkxdk.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdGF3YmFwb3NuZGZ4aWpreGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzUyNDUsImV4cCI6MjA3OTY1MTI0NX0.tY-CHuyb2zr9s6hlGkwmrdTvg920VVNghI9S45CjwKk"
+)
 
 // ===== UI =====
 window.showRegister = function() {
@@ -74,6 +74,7 @@ window.showRegister = function() {
   document.getElementById("registerBox").classList.remove("hidden")
   document.getElementById("title").innerText = "Inscription"
 }
+
 window.showLogin = function() {
   document.getElementById("registerBox").classList.add("hidden")
   document.getElementById("loginBox").classList.remove("hidden")
@@ -86,24 +87,46 @@ window.register = async function() {
   const prenom = document.getElementById("regPrenom").value.trim();
   const username = document.getElementById("regUsername").value.trim();
   const password = document.getElementById("regPassword").value.trim();
-  if(!nom || !prenom || !username || !password){ alert("Remplis tous les champs"); return; }
-
+  
+  if(!nom || !prenom || !username || !password){
+    alert("Remplis tous les champs");
+    return;
+  }
+  
   const { data: existing } = await supabase.from("profiles").select("id").eq("username", username);
-  if(existing.length>0){ alert("Username déjà utilisé"); return; }
-
+  if(existing.length > 0){
+    alert("Username déjà utilisé");
+    return;
+  }
+  
   const { error } = await supabase.from("profiles").insert([{ nom, prenom, username, password, role:"user" }]);
-  if(error){ alert("Erreur création compte: "+error.message); } 
-  else { alert("Compte créé ! Connecte-toi."); showLogin(); }
+  if(error){
+    alert("Erreur création compte: " + error.message);
+  } else {
+    alert("Compte créé ! Connecte-toi.");
+    showLogin();
+  }
 }
 
 // ===== LOGIN =====
 window.login = async function() {
   const username = document.getElementById("loginUsername").value.trim();
   const password = document.getElementById("loginPassword").value.trim();
-  const { data, error } = await supabase.from("profiles").select("*").eq("username", username).eq("password", password);
-  if(error){ alert("Erreur login"); return; }
-  if(!data || data.length===0){ alert("Identifiants incorrects"); return; }
-  const user = data[0]; localStorage.setItem("user", JSON.stringify(user)); showDashboard(user);
+  
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("username", username)
+    .eq("password", password);
+  
+  if(error || !data || data.length === 0){
+    alert("Identifiants incorrects");
+    return;
+  }
+  
+  const user = data[0];
+  localStorage.setItem("user", JSON.stringify(user));
+  showDashboard(user);
 }
 
 // ===== DASHBOARD =====
@@ -111,61 +134,132 @@ function showDashboard(user){
   document.getElementById("loginBox").classList.add("hidden")
   document.getElementById("registerBox").classList.add("hidden")
   document.getElementById("dashboard").classList.remove("hidden")
-  document.getElementById("userDisplay").innerText=user.username
-  document.getElementById("roleDisplay").innerText=user.role
+  document.getElementById("userDisplay").innerText = user.username
+  document.getElementById("roleDisplay").innerText = user.role
   loadTickets()
 }
-window.logout = function(){ localStorage.removeItem("user"); location.reload() }
+
+window.logout = function(){
+  localStorage.removeItem("user");
+  location.reload()
+}
 
 // ===== TICKETS =====
 window.createTicket = async function(){
   const user = JSON.parse(localStorage.getItem("user"))
   if(!user){ alert("Connecte-toi"); return; }
-
+  
   const nom = document.getElementById("ticketNom").value.trim();
   const prenom = document.getElementById("ticketPrenom").value.trim();
   const raison = document.getElementById("ticketRaison").value;
-
-  if(raison==="Rejoindre une composante" && !["soldat","sergent","officier"].includes(user.role)){
-    alert("Tu n'as pas le droit de créer ce ticket"); return;
+  
+  if(raison === "Rejoindre une composante" && !["soldat","sergent","officier"].includes(user.role)){
+    alert("Tu n'as pas le droit de créer ce ticket");
+    return;
   }
-
-  if(!nom || !prenom){ alert("Remplis nom et prénom"); return; }
-
-  const { error } = await supabase.from("tickets").insert([{ user_id:user.id, nom, prenom, raison, status:"ouvert" }]);
-  if(error){ alert("Erreur création ticket: "+error.message); return; }
-
-  document.getElementById("ticketNom").value=""
-  document.getElementById("ticketPrenom").value=""
+  
+  if(!nom || !prenom){
+    alert("Remplis nom et prénom");
+    return;
+  }
+  
+  const { error } = await supabase.from("tickets").insert([{
+    user_id: user.id,
+    nom,
+    prenom,
+    raison,
+    status: "ouvert"
+  }]);
+  
+  if(error){
+    alert("Erreur création ticket: " + error.message);
+    return;
+  }
+  
+  document.getElementById("ticketNom").value = ""
+  document.getElementById("ticketPrenom").value = ""
   loadTickets()
 }
 
 async function loadTickets(){
   const user = JSON.parse(localStorage.getItem("user"))
-  let query = supabase.from("tickets").select("*").order("created_at",{ascending:false})
-
-  if(user.role==="user" || user.role==="soldat"){ query = query.eq("user_id",user.id) }
-  else if(user.role==="sergent"){ query = query.ilike("raison","%Recrutement%") }
-
+  if(!user) return;
+  
+  let query = supabase.from("tickets").select("*").order("created_at", {ascending: false})
+  
+  if(user.role === "user" || user.role === "soldat"){
+    query = query.eq("user_id", user.id)
+  } else if(user.role === "sergent"){
+    query = query.ilike("raison", "%Recrutement%")
+  }
+  // Les officiers voient tous les tickets (pas de filtre supplémentaire)
+  
   const { data, error } = await query
+  
   const container = document.getElementById("ticketsContainer")
-  container.innerHTML=""
-  if(error){ container.innerText="Erreur chargement tickets"; return; }
-  if(!data || data.length===0){ container.innerText="Pas de tickets"; return; }
-
-  data.forEach(ticket=>{
+  container.innerHTML = ""
+  
+  if(error){
+    container.innerText = "Erreur chargement tickets";
+    return;
+  }
+  
+  if(!data || data.length === 0){
+    container.innerText = "Pas de tickets";
+    return;
+  }
+  
+  data.forEach(ticket => {
     const div = document.createElement("div")
-    div.className="ticket"
-    div.innerHTML=`
+    div.className = "ticket"
+    
+    let html = `
       <b>${ticket.raison}</b> - Status: ${ticket.status}<br>
       ${ticket.nom} ${ticket.prenom}<br>
       <div class="messages" id="messages-${ticket.id}"></div>
       <textarea id="msg-${ticket.id}" placeholder="Répondre..."></textarea>
       <button onclick="sendMessage('${ticket.id}')">Envoyer</button>
     `
+    
+    // Bouton Supprimer → uniquement pour officier
+    if(user.role === "officier"){
+      html += `
+        <button class="delete" onclick="deleteTicket('${ticket.id}')">Supprimer</button>
+      `
+    }
+    
+    div.innerHTML = html
     container.appendChild(div)
+    
     loadMessages(ticket.id)
   })
+}
+
+// ===== SUPPRESSION TICKET =====
+window.deleteTicket = async function(ticketId){
+  if(!confirm("Voulez-vous vraiment supprimer ce ticket ? Cette action est irréversible.")){
+    return;
+  }
+  
+  // Suppression des messages associés (bonne pratique)
+  await supabase
+    .from("messages")
+    .delete()
+    .eq("ticket_id", ticketId)
+  
+  // Suppression du ticket
+  const { error } = await supabase
+    .from("tickets")
+    .delete()
+    .eq("id", ticketId)
+  
+  if(error){
+    alert("Erreur lors de la suppression : " + error.message);
+    return;
+  }
+  
+  alert("Ticket supprimé avec succès");
+  loadTickets(); // Rafraîchir la liste
 }
 
 // ===== MESSAGES =====
@@ -173,46 +267,79 @@ window.sendMessage = async function(ticketId){
   const user = JSON.parse(localStorage.getItem("user"))
   const textarea = document.getElementById("msg-"+ticketId)
   const content = textarea.value.trim()
+  
   if(!content) return
-
-  const { data: ticketData } = await supabase.from("tickets").select("*").eq("id",ticketId)
-  const ticket = ticketData[0]
-  if(ticket.user_id!==user.id && user.role!=="officier"){ alert("Tu ne peux pas répondre à ce ticket"); return }
-
-  await supabase.from("messages").insert([{ ticket_id:ticketId, sender_id:user.id, content }])
-  textarea.value=""
+  
+  const { data: ticketData } = await supabase.from("tickets").select("*").eq("id", ticketId).single()
+  if(!ticketData) return;
+  
+  // Vérification des droits
+  if(ticketData.user_id !== user.id && user.role !== "officier"){
+    alert("Tu ne peux pas répondre à ce ticket");
+    return;
+  }
+  
+  await supabase.from("messages").insert([{
+    ticket_id: ticketId,
+    sender_id: user.id,
+    content
+  }])
+  
+  textarea.value = ""
   loadMessages(ticketId)
 }
 
 async function loadMessages(ticketId){
-  const { data: messages } = await supabase.from("messages").select("*").eq("ticket_id", ticketId).order("created_at",{ascending:true})
+  const { data: messages } = await supabase
+    .from("messages")
+    .select("*")
+    .eq("ticket_id", ticketId)
+    .order("created_at", {ascending: true})
+  
   const container = document.getElementById("messages-"+ticketId)
-  container.innerHTML=""
-  if(!messages) return
-
+  container.innerHTML = ""
+  
+  if(!messages || messages.length === 0) return;
+  
   for(const msg of messages){
-    // Récupération du profil du sender
-    const { data: senderData } = await supabase.from("profiles").select("*").eq("id", msg.sender_id).single()
-    const sender = senderData
-
-    let roleLabel="", roleClass="user"
-    if(sender.role==="officier"){ roleLabel="[CORPS DES OFFICIERS]"; roleClass="officier" }
-    else if(sender.role==="sergent"){ roleLabel="[CORPS D'ENCADREMENT]"; roleClass="sergent" }
-    else if(sender.role==="soldat"){ roleLabel="[Soldat]"; roleClass="soldat" }
-    else{ roleLabel=""; roleClass="user" }
-
+    const { data: sender } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", msg.sender_id)
+      .single()
+    
+    if(!sender) continue;
+    
+    let roleLabel = "", roleClass = "user";
+    if(sender.role === "officier"){
+      roleLabel = "[CORPS DES OFFICIERS]";
+      roleClass = "officier";
+    } else if(sender.role === "sergent"){
+      roleLabel = "[CORPS D'ENCADREMENT]";
+      roleClass = "sergent";
+    } else if(sender.role === "soldat"){
+      roleLabel = "[Soldat]";
+      roleClass = "soldat";
+    }
+    
     const date = new Date(msg.created_at).toLocaleString()
     const messageDiv = document.createElement("div")
-    messageDiv.className = "message "+roleClass
-    messageDiv.innerHTML = `<div class="message-header">${sender.nom} ${sender.prenom} ${roleLabel} - ${date}</div>${msg.content}`
+    messageDiv.className = `message ${roleClass}`
+    messageDiv.innerHTML = `
+      <div class="message-header">
+        ${sender.nom} ${sender.prenom} ${roleLabel} - ${date}
+      </div>
+      ${msg.content}
+    `
     container.appendChild(messageDiv)
   }
 }
 
 // ===== AUTO LOGIN =====
 const savedUser = localStorage.getItem("user")
-if(savedUser){ showDashboard(JSON.parse(savedUser)) }
-
+if(savedUser){
+  showDashboard(JSON.parse(savedUser))
+}
 </script>
 </body>
 </html>
