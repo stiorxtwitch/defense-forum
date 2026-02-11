@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Defense Forum - Tickets avec Rôles</title>
+<title>Defense Forum - Tickets avec Rôles et Messages</title>
 <style>
 body { font-family: Arial; background:#1e1e2f; color:white; display:flex; justify-content:center; }
 .box { background:#2c2c3f; padding:30px; width:700px; border-radius:10px; margin-top:20px; }
@@ -10,7 +10,13 @@ input, select, textarea { width:100%; padding:8px; margin:5px 0; background:#1a1
 button { padding:10px; margin:5px 0; background:#5865F2; color:white; border:none; cursor:pointer; }
 .hidden { display:none; }
 .ticket { background:#2c2c3f; padding:15px; margin:10px 0; border-radius:8px; }
-.messages { background:#1a1a28; padding:10px; margin-top:5px; border-radius:6px; max-height:100px; overflow-y:auto; }
+.messages { background:#1a1a28; padding:10px; margin-top:5px; border-radius:6px; max-height:150px; overflow-y:auto; }
+.message { margin-bottom:5px; padding:5px; border-radius:5px; }
+.message-header { font-size:12px; color:#aaa; margin-bottom:3px; }
+.officier { background:#0047AB; }
+.sergent { background:#006400; }
+.soldat { background:#8B4513; }
+.user { background:#333; }
 .link { color:#58a6ff; cursor:pointer; font-size:14px; }
 </style>
 </head>
@@ -141,12 +147,8 @@ async function loadTickets(){
   const user = JSON.parse(localStorage.getItem("user"))
   let query = supabase.from("tickets").select("*").order("created_at",{ascending:false})
 
-  // Permissions
-  if(user.role==="user" || user.role==="soldat"){
-    query = query.eq("user_id",user.id)
-  } else if(user.role==="sergent"){
-    query = query.ilike("raison","%Recrutement%") // peut voir tous tickets recrutement/composante
-  } // officier voit tout
+  if(user.role==="user" || user.role==="soldat"){ query = query.eq("user_id",user.id) }
+  else if(user.role==="sergent"){ query = query.ilike("raison","%Recrutement%") } // voit tous les tickets de recrutement/composante
 
   const { data, error } = await query
   const container = document.getElementById("ticketsContainer")
@@ -176,12 +178,9 @@ window.sendMessage = async function(ticketId){
   const content = textarea.value.trim()
   if(!content) return
 
-  // Vérification rôle pour répondre
   const { data: ticketData } = await supabase.from("tickets").select("*").eq("id",ticketId)
   const ticket = ticketData[0]
-  if(ticket.user_id!==user.id && user.role!=="officier"){
-    alert("Tu ne peux pas répondre à ce ticket"); return
-  }
+  if(ticket.user_id!==user.id && user.role!=="officier"){ alert("Tu ne peux pas répondre à ce ticket"); return }
 
   await supabase.from("messages").insert([{ ticket_id:ticketId, sender_id:user.id, content }])
   textarea.value=""
@@ -189,11 +188,25 @@ window.sendMessage = async function(ticketId){
 }
 
 async function loadMessages(ticketId){
-  const { data } = await supabase.from("messages").select("*").eq("ticket_id", ticketId).order("created_at",{ascending:true})
+  const { data } = await supabase.from("messages").select("*, sender:profiles(*)").eq("ticket_id", ticketId).order("created_at",{ascending:true})
   const container = document.getElementById("messages-"+ticketId)
   container.innerHTML=""
   if(!data) return
-  data.forEach(msg=>{ container.innerHTML+=`<p>💬 ${msg.content}</p>` })
+
+  data.forEach(msg=>{
+    const sender = msg.sender
+    let roleLabel="", roleClass="user"
+    if(sender.role==="officier"){ roleLabel="[CORPS DES OFFICIERS]"; roleClass="officier" }
+    else if(sender.role==="sergent"){ roleLabel="[CORPS D'ENCADREMENT]"; roleClass="sergent" }
+    else if(sender.role==="soldat"){ roleLabel="[Soldat]"; roleClass="soldat" }
+    else{ roleLabel=""; roleClass="user" }
+
+    const date = new Date(msg.created_at).toLocaleString()
+    const messageDiv = document.createElement("div")
+    messageDiv.className = "message "+roleClass
+    messageDiv.innerHTML = `<div class="message-header">${sender.nom} ${sender.prenom} ${roleLabel} - ${date}</div>${msg.content}`
+    container.appendChild(messageDiv)
+  })
 }
 
 // ===== AUTO LOGIN =====
