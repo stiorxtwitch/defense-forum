@@ -14,7 +14,6 @@
     --text-muted: #a0a0cc;
     --border: #2a2a44;
   }
-
   * { box-sizing: border-box; margin:0; padding:0; }
   body {
     font-family: 'Segoe UI', Arial, sans-serif;
@@ -25,7 +24,6 @@
     display: flex;
     justify-content: center;
   }
-
   .box {
     background: var(--card);
     padding: 32px;
@@ -35,11 +33,9 @@
     box-shadow: 0 8px 32px rgba(0,0,0,0.6);
     border: 1px solid var(--border);
   }
-
   h2, h3 { color: white; margin-bottom: 16px; }
   h2 { font-size: 1.9rem; }
   h3 { font-size: 1.4rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-
   input, select, textarea {
     width: 100%;
     padding: 12px 14px;
@@ -50,13 +46,11 @@
     border-radius: 6px;
     font-size: 1rem;
   }
-
   input:focus, textarea:focus, select:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(88,101,242,0.25);
   }
-
   button {
     padding: 12px 24px;
     margin: 8px 6px 8px 0;
@@ -68,70 +62,21 @@
     font-weight: 500;
     transition: all 0.2s;
   }
-
   button:hover { background: var(--accent-dark); transform: translateY(-1px); }
-
   button.delete { background: var(--danger); }
   button.delete:hover { background: #c82333; }
-
   button.logs { background: #6c757d; }
   button.logs:hover { background: #5a6268; }
-
   .hidden { display: none; }
-
-  .link {
-    color: var(--accent);
-    cursor: pointer;
-    text-decoration: underline;
-    font-size: 0.95rem;
-    margin-top: 8px;
-    display: inline-block;
-  }
-
-  .ticket {
-    background: #141426;
-    padding: 18px;
-    margin: 16px 0;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-  }
-
-  .messages {
-    background: #0d0d18;
-    padding: 12px;
-    margin: 12px 0 16px;
-    border-radius: 8px;
-    max-height: 200px;
-    overflow-y: auto;
-    border: 1px solid var(--border);
-  }
-
-  .message {
-    margin-bottom: 10px;
-    padding: 10px 12px;
-    border-radius: 6px;
-    background: #1e1e30;
-  }
-
-  .message-header {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-bottom: 5px;
-  }
-
+  .link { color: var(--accent); cursor: pointer; text-decoration: underline; font-size: 0.95rem; margin-top: 8px; display: inline-block; }
+  .ticket { background: #141426; padding: 18px; margin: 16px 0; border-radius: 10px; border: 1px solid var(--border); }
+  .messages { background: #0d0d18; padding: 12px; margin: 12px 0 16px; border-radius: 8px; max-height: 200px; overflow-y: auto; border: 1px solid var(--border); }
+  .message { margin-bottom: 10px; padding: 10px 12px; border-radius: 6px; background: #1e1e30; }
+  .message-header { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px; }
   .officier { background: rgba(0,71,171,0.5); }
   .sergent  { background: rgba(0,100,0,0.5); }
   .soldat   { background: rgba(139,69,19,0.5); }
-
-  .log-entry {
-    padding: 12px 16px;
-    background: #111122;
-    border-radius: 6px;
-    margin: 10px 0;
-    border-left: 4px solid var(--accent);
-    font-size: 0.94rem;
-  }
-
+  .log-entry { padding: 12px 16px; background: #111122; border-radius: 6px; margin: 10px 0; border-left: 4px solid var(--accent); font-size: 0.94rem; }
   .log-entry.delete { border-left-color: var(--danger); }
   .log-entry small { color: var(--text-muted); float: right; font-size: 0.85rem; }
 </style>
@@ -200,10 +145,9 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdGF3YmFwb3NuZGZ4aWpreGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzUyNDUsImV4cCI6MjA3OTY1MTI0NX0.tY-CHuyb2zr9s6hlGkwmrdTvg920VVNghI9S45CjwKk"
 )
 
-// Helpers
 const getCurrentUser = () => JSON.parse(localStorage.getItem("user") || "null");
 
-// UI
+// UI toggles
 window.showRegister = () => {
   document.getElementById("loginBox").classList.add("hidden");
   document.getElementById("registerBox").classList.remove("hidden");
@@ -229,11 +173,10 @@ window.register = async () => {
   if (existing) return alert("Ce nom d'utilisateur est déjà pris");
 
   const { error } = await supabase.from("profiles").insert({ nom, prenom, username, password, role: "user" });
-  if (error) alert("Erreur : " + error.message);
-  else {
-    alert("Compte créé ! Connectez-vous.");
-    showLogin();
-  }
+  if (error) return alert("Erreur création compte : " + error.message);
+
+  alert("Compte créé ! Connectez-vous.");
+  showLogin();
 };
 
 // Login
@@ -254,7 +197,6 @@ window.login = async () => {
   showDashboard(data);
 };
 
-// Dashboard
 function showDashboard(user) {
   document.getElementById("loginBox").classList.add("hidden");
   document.getElementById("registerBox").classList.add("hidden");
@@ -274,16 +216,17 @@ window.logout = () => {
   location.reload();
 };
 
-// Log helper
+// Helper log (INSERT autorisé via RLS anon)
 async function addLog(action, details = {}) {
   const user = getCurrentUser();
-  if (!user) return;
-
-  await supabase.from("logs").insert({
-    actor_id: user.id,
+  const payload = {
+    actor_id: user?.id || null,
     action,
-    details: JSON.stringify(details)
-  });
+    details: details ? JSON.stringify(details) : null
+  };
+
+  const { error } = await supabase.from("logs").insert(payload);
+  if (error) console.warn("Log non enregistré :", error.message);
 }
 
 // Tickets
@@ -302,15 +245,13 @@ window.createTicket = async () => {
 
   const { data, error } = await supabase.from("tickets").insert({
     user_id: user.id,
-    nom,
-    prenom,
-    raison,
+    nom, prenom, raison,
     status: "ouvert"
   }).select().single();
 
-  if (error) return alert("Erreur : " + error.message);
+  if (error) return alert("Erreur création ticket : " + error.message);
 
-  await addLog("ticket_created", { ticket_id: data.id, raison, nom, prenom });
+  await addLog("ticket_created", { ticket_id: data.id, raison });
 
   document.getElementById("ticketNom").value = "";
   document.getElementById("ticketPrenom").value = "";
@@ -321,7 +262,9 @@ async function loadTickets() {
   const user = getCurrentUser();
   if (!user) return;
 
-  let query = supabase.from("tickets").select("*, profiles!user_id(nom, prenom, username)").order("created_at", { ascending: false });
+  let query = supabase.from("tickets")
+    .select("*, profiles!user_id (nom, prenom, username)")
+    .order("created_at", { ascending: false });
 
   if (user.role === "user" || user.role === "soldat") {
     query = query.eq("user_id", user.id);
@@ -331,10 +274,12 @@ async function loadTickets() {
 
   const { data, error } = await query;
   const container = document.getElementById("ticketsContainer");
-  container.innerHTML = "";
+  container.innerHTML = error ? `<p style="color:#ff6b6b;">Erreur : ${error.message}</p>` : "";
 
-  if (error) return container.innerHTML = `<p style="color:#ff6b6b;">Erreur : ${error.message}</p>`;
-  if (!data?.length) return container.innerHTML = "<p>Aucun ticket</p>";
+  if (error || !data?.length) {
+    container.innerHTML += "<p>Aucun ticket</p>";
+    return;
+  }
 
   data.forEach(ticket => {
     const div = document.createElement("div");
@@ -362,7 +307,7 @@ window.deleteTicket = async (ticketId) => {
   await supabase.from("messages").delete().eq("ticket_id", ticketId);
 
   const { error } = await supabase.from("tickets").delete().eq("id", ticketId);
-  if (error) return alert("Erreur : " + error.message);
+  if (error) return alert("Erreur suppression : " + error.message);
 
   await addLog("ticket_deleted", { ticket_id: ticketId });
 
@@ -378,48 +323,61 @@ window.sendMessage = async (ticketId) => {
   const content = textarea.value.trim();
   if (!content) return;
 
-  const { data: ticket, error: ticketErr } = await supabase.from("tickets").select("user_id").eq("id", ticketId).single();
-  if (ticketErr || !ticket) return alert("Ticket introuvable");
+  const { data: ticket, error: err } = await supabase.from("tickets").select("user_id").eq("id", ticketId).single();
+  if (err || !ticket) return alert("Ticket introuvable");
 
   if (ticket.user_id !== user.id && user.role !== "officier") {
     return alert("Non autorisé");
   }
 
-  const { error } = await supabase.from("messages").insert({ ticket_id: ticketId, sender_id: user.id, content });
-  if (error) return alert("Erreur : " + error.message);
+  const { error } = await supabase.from("messages").insert({
+    ticket_id: ticketId,
+    sender_id: user.id,
+    content
+  });
 
-  await addLog("message_sent", { ticket_id: ticketId, content: content.substring(0, 100) + "..." });
+  if (error) return alert("Erreur envoi message : " + error.message);
+
+  await addLog("message_sent", { ticket_id: ticketId, content: content.slice(0, 80) + "..." });
 
   textarea.value = "";
   loadMessages(ticketId);
 };
 
 async function loadMessages(ticketId) {
-  const { data: msgs } = await supabase
-    .from("messages")
-    .select("*, profiles!sender_id(nom, prenom, role)")
-    .eq("ticket_id", ticketId)
-    .order("created_at");
-
   const container = document.getElementById(`messages-${ticketId}`);
   container.innerHTML = "";
 
-  if (!msgs?.length) return;
+  // On évite le join complexe qui cause 400 → on charge messages puis profiles séparément
+  const { data: messages, error } = await supabase
+    .from("messages")
+    .select("*")
+    .eq("ticket_id", ticketId)
+    .order("created_at");
 
-  msgs.forEach(msg => {
-    const sender = msg.profiles || { nom: "?", prenom: "?", role: "user" };
-    let roleLabel = "";
-    let roleClass = "user";
-    if (sender.role === "officier") { roleLabel = "[OFFICIER]"; roleClass = "officier"; }
-    else if (sender.role === "sergent") { roleLabel = "[SERGENT]"; roleClass = "sergent"; }
-    else if (sender.role === "soldat") { roleLabel = "[SOLDAT]"; roleClass = "soldat"; }
+  if (error || !messages?.length) return;
 
-    const date = new Date(msg.created_at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" });
+  for (const msg of messages) {
+    const { data: sender } = await supabase
+      .from("profiles")
+      .select("nom, prenom, role")
+      .eq("id", msg.sender_id)
+      .single();
+
+    const s = sender || { nom: "?", prenom: "?", role: "user" };
+
+    let roleLabel = "", roleClass = "user";
+    if (s.role === "officier") { roleLabel = "[OFFICIER]"; roleClass = "officier"; }
+    else if (s.role === "sergent") { roleLabel = "[SERGENT]"; roleClass = "sergent"; }
+    else if (s.role === "soldat") { roleLabel = "[SOLDAT]"; roleClass = "soldat"; }
+
+    const date = new Date(msg.created_at).toLocaleString("fr-FR", {dateStyle: "short", timeStyle: "short"});
+
     const div = document.createElement("div");
     div.className = `message ${roleClass}`;
-    div.innerHTML = `<div class="message-header">${sender.nom} ${sender.prenom} ${roleLabel} • ${date}</div>${msg.content}`;
+    div.innerHTML = `<div class="message-header">${s.nom} ${s.prenom} ${roleLabel} • ${date}</div>${msg.content}`;
     container.appendChild(div);
-  });
+  }
 }
 
 // Logs
@@ -429,20 +387,27 @@ async function loadLogs() {
 
   const { data, error } = await supabase
     .from("logs")
-    .select("*, profiles!actor_id(username, nom, prenom)")
+    .select("*, profiles!actor_id (username, nom, prenom)")
     .order("created_at", { ascending: false })
     .limit(50);
 
   container.innerHTML = "";
 
-  if (error) return container.innerHTML = `<p style="color:#ff6b6b;">Erreur : ${error.message}</p>`;
-  if (!data?.length) return container.innerHTML = "<p>Aucune activité récente</p>";
+  if (error) {
+    container.innerHTML = `<p style="color:#ff6b6b;">Erreur logs : ${error.message}</p>`;
+    return;
+  }
+
+  if (!data?.length) {
+    container.innerHTML = "<p>Aucune activité récente</p>";
+    return;
+  }
 
   data.forEach(log => {
-    const actor = log.profiles || { username: "?", nom: "?", prenom: "?" };
+    const actor = log.profiles || { nom: "?", prenom: "?", username: "?" };
     const date = new Date(log.created_at).toLocaleString("fr-FR");
     const details = log.details ? JSON.parse(log.details) : {};
-    let text = `${log.action} par ${actor.nom} ${actor.prenom} (${actor.username})`;
+    let text = `${log.action} par ${actor.nom} ${actor.prenom} (${actor.username || "?"})`;
 
     if (log.action === "ticket_created") text += ` — ${details.raison || "?"}`;
     if (log.action === "ticket_deleted") text += ` — Ticket ${details.ticket_id}`;
