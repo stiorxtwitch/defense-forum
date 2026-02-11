@@ -2,62 +2,218 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Defense Forum - Tickets avec Rôles et Messages</title>
+<title>Defense Forum - Gestion des Tickets</title>
 <style>
-body { font-family: Arial; background:#1e1e2f; color:white; display:flex; justify-content:center; }
-.box { background:#2c2c3f; padding:30px; width:700px; border-radius:10px; margin-top:20px; }
-input, select, textarea { width:100%; padding:8px; margin:5px 0; background:#1a1a28; color:white; border:1px solid #444; }
-button { padding:10px; margin:5px 0; background:#5865F2; color:white; border:none; cursor:pointer; border-radius:4px; }
-button.delete { background:#c0392b; }
-button.delete:hover { background:#e74c3c; }
-.hidden { display:none; }
-.ticket { background:#2c2c3f; padding:15px; margin:10px 0; border-radius:8px; }
-.messages { background:#1a1a28; padding:10px; margin-top:5px; border-radius:6px; max-height:150px; overflow-y:auto; }
-.message { margin-bottom:5px; padding:5px; border-radius:5px; }
-.message-header { font-size:12px; color:#aaa; margin-bottom:3px; }
-.officier { background:#0047AB; }
-.sergent { background:#006400; }
-.soldat { background:#8B4513; }
-.user { background:#333; }
-.link { color:#58a6ff; cursor:pointer; font-size:14px; }
+  :root {
+    --bg: #0f0f1a;
+    --card: #1a1a2e;
+    --accent: #5865f2;
+    --accent-dark: #4752c4;
+    --danger: #dc3545;
+    --text: #e0e0ff;
+    --text-muted: #a0a0cc;
+    --border: #2a2a44;
+  }
+
+  * { box-sizing: border-box; margin:0; padding:0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .box {
+    background: var(--card);
+    padding: 32px;
+    width: 100%;
+    max-width: 780px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    border: 1px solid var(--border);
+  }
+
+  h2, h3 { color: #ffffff; margin-bottom: 16px; }
+  h2 { font-size: 1.8rem; }
+  h3 { font-size: 1.35rem; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    background: #111122;
+    color: white;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 1rem;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(88,101,242,0.2);
+  }
+
+  button {
+    padding: 12px 20px;
+    margin: 8px 4px 8px 0;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  button:hover {
+    background: var(--accent-dark);
+    transform: translateY(-1px);
+  }
+
+  button.delete {
+    background: var(--danger);
+  }
+  button.delete:hover {
+    background: #c82333;
+  }
+
+  button.logs {
+    background: #6c757d;
+  }
+  button.logs:hover {
+    background: #5a6268;
+  }
+
+  .hidden { display: none; }
+  .link {
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 0.95rem;
+    text-decoration: underline;
+    margin-top: 8px;
+    display: inline-block;
+  }
+
+  .ticket {
+    background: #141426;
+    padding: 18px;
+    margin: 16px 0;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  .ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .messages {
+    background: #0d0d18;
+    padding: 12px;
+    margin: 12px 0;
+    border-radius: 8px;
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+  }
+
+  .message {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 6px;
+    background: #1e1e30;
+  }
+
+  .message-header {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .officier { background: #0047ab88; }
+  .sergent  { background: #00640088; }
+  .soldat   { background: #8b451388; }
+  .user     { background: #2a2a3a; }
+
+  #logsSection {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .log-entry {
+    padding: 10px 14px;
+    background: #111122;
+    border-radius: 6px;
+    margin: 8px 0;
+    font-size: 0.92rem;
+    border-left: 4px solid var(--accent);
+  }
+
+  .log-entry.delete { border-left-color: var(--danger); }
+  .log-entry small { color: var(--text-muted); float: right; }
 </style>
 </head>
 <body>
+
 <div class="box">
-<h2 id="title">Connexion</h2>
-<div id="loginBox">
-  <input type="text" id="loginUsername" placeholder="Username">
-  <input type="password" id="loginPassword" placeholder="Mot de passe">
-  <button onclick="login()">Se connecter</button>
-  <p class="link" onclick="showRegister()">Pas de compte ? S'inscrire</p>
-</div>
-<div id="registerBox" class="hidden">
-  <input type="text" id="regNom" placeholder="Nom">
-  <input type="text" id="regPrenom" placeholder="Prénom">
-  <input type="text" id="regUsername" placeholder="Username">
-  <input type="password" id="regPassword" placeholder="Mot de passe">
-  <button onclick="register()">Créer un compte</button>
-  <p class="link" onclick="showLogin()">Déjà un compte ? Se connecter</p>
-</div>
-<div id="dashboard" class="hidden">
-  <h3>Bienvenue <span id="userDisplay"></span></h3>
-  <p>Rôle : <span id="roleDisplay"></span></p>
-  <button onclick="logout()">Déconnexion</button>
-  <hr>
-  <h3>Créer un ticket</h3>
-  <input type="text" id="ticketNom" placeholder="Nom">
-  <input type="text" id="ticketPrenom" placeholder="Prénom">
-  <select id="ticketRaison">
-    <option value="Recrutement">Recrutement</option>
-    <option value="Question Officier">Question Officier</option>
-    <option value="Rapport Interne">Rapport Interne</option>
-    <option value="Permis avion / PPL">Permis avion / PPL</option>
-    <option value="Rejoindre une composante">Rejoindre une composante</option>
-  </select>
-  <button onclick="createTicket()">Créer Ticket</button>
-  <hr>
-  <h3>Tickets</h3>
-  <div id="ticketsContainer"></div>
+  <h2 id="title">Connexion</h2>
+
+  <div id="loginBox">
+    <input type="text" id="loginUsername" placeholder="Username">
+    <input type="password" id="loginPassword" placeholder="Mot de passe">
+    <button onclick="login()">Se connecter</button>
+    <p class="link" onclick="showRegister()">Pas de compte ? S'inscrire</p>
+  </div>
+
+  <div id="registerBox" class="hidden">
+    <input type="text" id="regNom" placeholder="Nom">
+    <input type="text" id="regPrenom" placeholder="Prénom">
+    <input type="text" id="regUsername" placeholder="Username">
+    <input type="password" id="regPassword" placeholder="Mot de passe">
+    <button onclick="register()">Créer un compte</button>
+    <p class="link" onclick="showLogin()">Déjà un compte ? Se connecter</p>
+  </div>
+
+  <div id="dashboard" class="hidden">
+    <h3>Bienvenue, <span id="userDisplay"></span></h3>
+    <p>Rôle : <span id="roleDisplay"></span></p>
+    <button onclick="logout()">Déconnexion</button>
+
+    <hr style="border-color:var(--border); margin:24px 0;">
+
+    <h3>Créer un ticket</h3>
+    <input type="text" id="ticketNom" placeholder="Nom">
+    <input type="text" id="ticketPrenom" placeholder="Prénom">
+    <select id="ticketRaison">
+      <option value="Recrutement">Recrutement</option>
+      <option value="Question Officier">Question Officier</option>
+      <option value="Rapport Interne">Rapport Interne</option>
+      <option value="Permis avion / PPL">Permis avion / PPL</option>
+      <option value="Rejoindre une composante">Rejoindre une composante</option>
+    </select>
+    <button onclick="createTicket()">Créer Ticket</button>
+
+    <hr style="border-color:var(--border); margin:24px 0;">
+
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3>Tickets</h3>
+      <button class="logs" id="logsBtn" style="display:none;" onclick="toggleLogs()">Voir les Logs</button>
+    </div>
+
+    <div id="ticketsContainer"></div>
+
+    <div id="logsSection" class="hidden">
+      <h3>Historique des actions (Logs)</h3>
+      <div id="logsContainer"></div>
+    </div>
+  </div>
 </div>
 
 <script type="module">
@@ -68,278 +224,298 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdGF3YmFwb3NuZGZ4aWpreGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzUyNDUsImV4cCI6MjA3OTY1MTI0NX0.tY-CHuyb2zr9s6hlGkwmrdTvg920VVNghI9S45CjwKk"
 )
 
-// ===== UI =====
-window.showRegister = function() {
+// =======================
+// UI Toggles
+// =======================
+window.showRegister = () => {
   document.getElementById("loginBox").classList.add("hidden")
   document.getElementById("registerBox").classList.remove("hidden")
   document.getElementById("title").innerText = "Inscription"
 }
 
-window.showLogin = function() {
+window.showLogin = () => {
   document.getElementById("registerBox").classList.add("hidden")
   document.getElementById("loginBox").classList.remove("hidden")
   document.getElementById("title").innerText = "Connexion"
 }
 
-// ===== REGISTER =====
-window.register = async function() {
-  const nom = document.getElementById("regNom").value.trim();
-  const prenom = document.getElementById("regPrenom").value.trim();
-  const username = document.getElementById("regUsername").value.trim();
-  const password = document.getElementById("regPassword").value.trim();
-  
-  if(!nom || !prenom || !username || !password){
-    alert("Remplis tous les champs");
-    return;
-  }
-  
-  const { data: existing } = await supabase.from("profiles").select("id").eq("username", username);
-  if(existing.length > 0){
-    alert("Username déjà utilisé");
-    return;
-  }
-  
-  const { error } = await supabase.from("profiles").insert([{ nom, prenom, username, password, role:"user" }]);
-  if(error){
-    alert("Erreur création compte: " + error.message);
-  } else {
-    alert("Compte créé ! Connecte-toi.");
-    showLogin();
+// =======================
+// REGISTER
+// =======================
+window.register = async () => {
+  const nom     = document.getElementById("regNom").value.trim()
+  const prenom  = document.getElementById("regPrenom").value.trim()
+  const username = document.getElementById("regUsername").value.trim()
+  const password = document.getElementById("regPassword").value.trim()
+
+  if (!nom || !prenom || !username || !password) return alert("Remplis tous les champs")
+
+  const { data: existing } = await supabase.from("profiles").select("id").eq("username", username)
+  if (existing?.length > 0) return alert("Username déjà utilisé")
+
+  const { error } = await supabase.from("profiles").insert([{ nom, prenom, username, password, role: "user" }])
+  if (error) alert("Erreur: " + error.message)
+  else {
+    alert("Compte créé ! Connecte-toi.")
+    showLogin()
   }
 }
 
-// ===== LOGIN =====
-window.login = async function() {
-  const username = document.getElementById("loginUsername").value.trim();
-  const password = document.getElementById("loginPassword").value.trim();
-  
+// =======================
+// LOGIN
+// =======================
+window.login = async () => {
+  const username = document.getElementById("loginUsername").value.trim()
+  const password = document.getElementById("loginPassword").value.trim()
+
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("username", username)
-    .eq("password", password);
-  
-  if(error || !data || data.length === 0){
-    alert("Identifiants incorrects");
-    return;
-  }
-  
-  const user = data[0];
-  localStorage.setItem("user", JSON.stringify(user));
-  showDashboard(user);
+    .eq("password", password)
+
+  if (error || !data?.length) return alert("Identifiants incorrects")
+
+  const user = data[0]
+  localStorage.setItem("user", JSON.stringify(user))
+  showDashboard(user)
 }
 
-// ===== DASHBOARD =====
-function showDashboard(user){
+// =======================
+// DASHBOARD
+// =======================
+function showDashboard(user) {
   document.getElementById("loginBox").classList.add("hidden")
   document.getElementById("registerBox").classList.add("hidden")
   document.getElementById("dashboard").classList.remove("hidden")
   document.getElementById("userDisplay").innerText = user.username
   document.getElementById("roleDisplay").innerText = user.role
+
+  // Afficher le bouton Logs uniquement aux officiers
+  if (user.role === "officier") {
+    document.getElementById("logsBtn").style.display = "inline-block"
+  }
+
   loadTickets()
 }
 
-window.logout = function(){
-  localStorage.removeItem("user");
+window.logout = () => {
+  localStorage.removeItem("user")
   location.reload()
 }
 
-// ===== TICKETS =====
-window.createTicket = async function(){
+// =======================
+// TICKETS
+// =======================
+window.createTicket = async () => {
   const user = JSON.parse(localStorage.getItem("user"))
-  if(!user){ alert("Connecte-toi"); return; }
-  
-  const nom = document.getElementById("ticketNom").value.trim();
-  const prenom = document.getElementById("ticketPrenom").value.trim();
-  const raison = document.getElementById("ticketRaison").value;
-  
-  if(raison === "Rejoindre une composante" && !["soldat","sergent","officier"].includes(user.role)){
-    alert("Tu n'as pas le droit de créer ce ticket");
-    return;
-  }
-  
-  if(!nom || !prenom){
-    alert("Remplis nom et prénom");
-    return;
-  }
-  
+  if (!user) return alert("Connecte-toi")
+
+  const nom    = document.getElementById("ticketNom").value.trim()
+  const prenom = document.getElementById("ticketPrenom").value.trim()
+  const raison = document.getElementById("ticketRaison").value
+
+  if (raison === "Rejoindre une composante" && !["soldat","sergent","officier"].includes(user.role))
+    return alert("Tu n'as pas le droit de créer ce ticket")
+
+  if (!nom || !prenom) return alert("Remplis nom et prénom")
+
   const { error } = await supabase.from("tickets").insert([{
     user_id: user.id,
-    nom,
-    prenom,
-    raison,
+    nom, prenom, raison,
     status: "ouvert"
-  }]);
-  
-  if(error){
-    alert("Erreur création ticket: " + error.message);
-    return;
+  }])
+
+  if (error) alert("Erreur: " + error.message)
+  else {
+    document.getElementById("ticketNom").value = ""
+    document.getElementById("ticketPrenom").value = ""
+    loadTickets()
   }
-  
-  document.getElementById("ticketNom").value = ""
-  document.getElementById("ticketPrenom").value = ""
-  loadTickets()
 }
 
-async function loadTickets(){
+async function loadTickets() {
   const user = JSON.parse(localStorage.getItem("user"))
-  if(!user) return;
-  
-  let query = supabase.from("tickets").select("*").order("created_at", {ascending: false})
-  
-  if(user.role === "user" || user.role === "soldat"){
+  if (!user) return
+
+  let query = supabase.from("tickets").select("*").order("created_at", { ascending: false })
+
+  if (user.role === "user" || user.role === "soldat") {
     query = query.eq("user_id", user.id)
-  } else if(user.role === "sergent"){
+  } else if (user.role === "sergent") {
     query = query.ilike("raison", "%Recrutement%")
   }
-  // Les officiers voient tous les tickets (pas de filtre supplémentaire)
-  
+
   const { data, error } = await query
-  
   const container = document.getElementById("ticketsContainer")
   container.innerHTML = ""
-  
-  if(error){
-    container.innerText = "Erreur chargement tickets";
-    return;
-  }
-  
-  if(!data || data.length === 0){
-    container.innerText = "Pas de tickets";
-    return;
-  }
-  
+
+  if (error) return container.innerText = "Erreur chargement tickets"
+  if (!data?.length) return container.innerText = "Aucun ticket"
+
   data.forEach(ticket => {
     const div = document.createElement("div")
     div.className = "ticket"
-    
+
     let html = `
-      <b>${ticket.raison}</b> - Status: ${ticket.status}<br>
-      ${ticket.nom} ${ticket.prenom}<br>
+      <div class="ticket-header">
+        <div>
+          <b>${ticket.raison}</b><br>
+          <small style="color:var(--text-muted)">${ticket.nom} ${ticket.prenom} • ${ticket.status}</small>
+        </div>
+      </div>
       <div class="messages" id="messages-${ticket.id}"></div>
       <textarea id="msg-${ticket.id}" placeholder="Répondre..."></textarea>
-      <button onclick="sendMessage('${ticket.id}')">Envoyer</button>
+      <div>
+        <button onclick="sendMessage('${ticket.id}')">Envoyer</button>
+        ${user.role === "officier" ? `<button class="delete" onclick="deleteTicket('${ticket.id}')">Supprimer</button>` : ""}
+      </div>
     `
-    
-    // Bouton Supprimer → uniquement pour officier
-    if(user.role === "officier"){
-      html += `
-        <button class="delete" onclick="deleteTicket('${ticket.id}')">Supprimer</button>
-      `
-    }
-    
+
     div.innerHTML = html
     container.appendChild(div)
-    
     loadMessages(ticket.id)
   })
 }
 
-// ===== SUPPRESSION TICKET =====
-window.deleteTicket = async function(ticketId){
-  if(!confirm("Voulez-vous vraiment supprimer ce ticket ? Cette action est irréversible.")){
-    return;
+// =======================
+// DELETE TICKET
+// =======================
+window.deleteTicket = async (ticketId) => {
+  if (!confirm("Supprimer ce ticket ? Action irréversible.")) return
+
+  await supabase.from("messages").delete().eq("ticket_id", ticketId)
+  const { error } = await supabase.from("tickets").delete().eq("id", ticketId)
+
+  if (error) alert("Erreur: " + error.message)
+  else {
+    alert("Ticket supprimé")
+    loadTickets()
+    if (!document.getElementById("logsSection").classList.contains("hidden")) {
+      loadLogs()
+    }
   }
-  
-  // Suppression des messages associés (bonne pratique)
-  await supabase
-    .from("messages")
-    .delete()
-    .eq("ticket_id", ticketId)
-  
-  // Suppression du ticket
-  const { error } = await supabase
-    .from("tickets")
-    .delete()
-    .eq("id", ticketId)
-  
-  if(error){
-    alert("Erreur lors de la suppression : " + error.message);
-    return;
-  }
-  
-  alert("Ticket supprimé avec succès");
-  loadTickets(); // Rafraîchir la liste
 }
 
-// ===== MESSAGES =====
-window.sendMessage = async function(ticketId){
+// =======================
+// MESSAGES
+// =======================
+window.sendMessage = async (ticketId) => {
   const user = JSON.parse(localStorage.getItem("user"))
   const textarea = document.getElementById("msg-"+ticketId)
   const content = textarea.value.trim()
-  
-  if(!content) return
-  
-  const { data: ticketData } = await supabase.from("tickets").select("*").eq("id", ticketId).single()
-  if(!ticketData) return;
-  
-  // Vérification des droits
-  if(ticketData.user_id !== user.id && user.role !== "officier"){
-    alert("Tu ne peux pas répondre à ce ticket");
-    return;
+  if (!content) return
+
+  const { data: ticket } = await supabase.from("tickets").select("user_id").eq("id", ticketId).single()
+  if (!ticket) return
+
+  if (ticket.user_id !== user.id && user.role !== "officier") {
+    return alert("Tu ne peux pas répondre à ce ticket")
   }
-  
-  await supabase.from("messages").insert([{
-    ticket_id: ticketId,
-    sender_id: user.id,
-    content
-  }])
-  
+
+  await supabase.from("messages").insert([{ ticket_id: ticketId, sender_id: user.id, content }])
   textarea.value = ""
   loadMessages(ticketId)
 }
 
-async function loadMessages(ticketId){
+async function loadMessages(ticketId) {
   const { data: messages } = await supabase
     .from("messages")
     .select("*")
     .eq("ticket_id", ticketId)
-    .order("created_at", {ascending: true})
-  
+    .order("created_at")
+
   const container = document.getElementById("messages-"+ticketId)
   container.innerHTML = ""
-  
-  if(!messages || messages.length === 0) return;
-  
-  for(const msg of messages){
-    const { data: sender } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", msg.sender_id)
-      .single()
-    
-    if(!sender) continue;
-    
-    let roleLabel = "", roleClass = "user";
-    if(sender.role === "officier"){
-      roleLabel = "[CORPS DES OFFICIERS]";
-      roleClass = "officier";
-    } else if(sender.role === "sergent"){
-      roleLabel = "[CORPS D'ENCADREMENT]";
-      roleClass = "sergent";
-    } else if(sender.role === "soldat"){
-      roleLabel = "[Soldat]";
-      roleClass = "soldat";
-    }
-    
-    const date = new Date(msg.created_at).toLocaleString()
-    const messageDiv = document.createElement("div")
-    messageDiv.className = `message ${roleClass}`
-    messageDiv.innerHTML = `
+
+  if (!messages?.length) return
+
+  for (const msg of messages) {
+    const { data: sender } = await supabase.from("profiles").select("*").eq("id", msg.sender_id).single()
+    if (!sender) continue
+
+    let roleLabel = "", roleClass = "user"
+    if (sender.role === "officier") { roleLabel = "[OFFICIER]"; roleClass = "officier" }
+    else if (sender.role === "sergent") { roleLabel = "[SERGENT]"; roleClass = "sergent" }
+    else if (sender.role === "soldat") { roleLabel = "[SOLDAT]"; roleClass = "soldat" }
+
+    const date = new Date(msg.created_at).toLocaleString('fr-FR', {dateStyle:'short', timeStyle:'short'})
+    const div = document.createElement("div")
+    div.className = `message ${roleClass}`
+    div.innerHTML = `
       <div class="message-header">
-        ${sender.nom} ${sender.prenom} ${roleLabel} - ${date}
+        ${sender.nom} ${sender.prenom} ${roleLabel} • ${date}
       </div>
       ${msg.content}
     `
-    container.appendChild(messageDiv)
+    container.appendChild(div)
   }
 }
 
-// ===== AUTO LOGIN =====
-const savedUser = localStorage.getItem("user")
-if(savedUser){
-  showDashboard(JSON.parse(savedUser))
+// =======================
+// LOGS (uniquement officiers)
+// =======================
+async function loadLogs() {
+  const container = document.getElementById("logsContainer")
+  container.innerHTML = "Chargement..."
+
+  // Pour l'exemple, on lit tous les tickets + messages récents
+  // Tu peux créer une vraie table "logs" plus tard si tu veux un vrai historique
+
+  const { data: tickets } = await supabase
+    .from("tickets")
+    .select("*, profiles!user_id(nom, prenom, username)")
+    .order("created_at", { ascending: false })
+    .limit(20)
+
+  container.innerHTML = ""
+
+  if (!tickets?.length) {
+    container.innerHTML = "<p>Aucune activité récente.</p>"
+    return
+  }
+
+  tickets.forEach(t => {
+    const date = new Date(t.created_at).toLocaleString('fr-FR')
+    const div = document.createElement("div")
+    div.className = "log-entry"
+    div.innerHTML = `
+      <strong>Création ticket</strong> – ${t.raison} par ${t.profiles?.nom || '?'} ${t.profiles?.prenom || '?'} (${t.profiles?.username || 'inconnu'}) 
+      <small>${date}</small>
+    `
+    container.appendChild(div)
+  })
+
+  // Exemple : logs de suppressions (à améliorer si tu crées une table logs)
+  const { data: messages } = await supabase
+    .from("messages")
+    .select("*, profiles!sender_id(username)")
+    .order("created_at", { ascending: false })
+    .limit(10)
+
+  messages?.forEach(m => {
+    const date = new Date(m.created_at).toLocaleString('fr-FR')
+    const div = document.createElement("div")
+    div.className = "log-entry"
+    div.innerHTML = `
+      Message envoyé par ${m.profiles?.username || '?'} 
+      <small>${date}</small>
+    `
+    container.appendChild(div)
+  })
 }
+
+window.toggleLogs = () => {
+  const section = document.getElementById("logsSection")
+  section.classList.toggle("hidden")
+  if (!section.classList.contains("hidden")) {
+    loadLogs()
+  }
+}
+
+// Auto-login
+const saved = localStorage.getItem("user")
+if (saved) showDashboard(JSON.parse(saved))
 </script>
 </body>
 </html>
