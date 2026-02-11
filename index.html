@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Defense Forum - Tickets</title>
+
 <style>
 body {
   font-family: Arial;
@@ -39,6 +40,7 @@ input, select, textarea {
   background:#1a1a28;
   padding:10px;
   margin-top:10px;
+  border-radius:6px;
 }
 </style>
 </head>
@@ -84,16 +86,23 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdGF3YmFwb3NuZGZ4aWpreGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzUyNDUsImV4cCI6MjA3OTY1MTI0NX0.tY-CHuyb2zr9s6hlGkwmrdTvg920VVNghI9S45CjwKk"
 )
 
+// ================= LOGIN / LOGOUT =================
+
 window.login = async function () {
   await supabase.auth.signInWithOAuth({
-    provider: "google"
+    provider: "google",
+    options: {
+      redirectTo: "http://localhost:3000"
+    }
   })
 }
 
 window.logout = async function () {
   await supabase.auth.signOut()
-  location.reload()
+  window.location.href = "http://localhost:3000"
 }
+
+// ================= UTILISATEUR =================
 
 async function getUser() {
   const { data } = await supabase.auth.getUser()
@@ -114,6 +123,8 @@ async function createProfileIfNotExists(user) {
     })
   }
 }
+
+// ================= CREATION TICKET =================
 
 document.getElementById("ticketForm").addEventListener("submit", async (e) => {
   e.preventDefault()
@@ -142,6 +153,8 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
     loadTickets()
   }
 })
+
+// ================= AFFICHAGE TICKETS =================
 
 async function loadTickets() {
   const user = await getUser()
@@ -180,6 +193,8 @@ async function loadTickets() {
   })
 }
 
+// ================= MESSAGES =================
+
 window.sendMessage = async function(ticketId) {
   const user = await getUser()
   if (!user) return
@@ -214,6 +229,8 @@ async function loadMessages(ticketId) {
   })
 }
 
+// ================= AUTH STATE =================
+
 supabase.auth.onAuthStateChange(async () => {
   const user = await getUser()
   if (user) {
@@ -222,6 +239,12 @@ supabase.auth.onAuthStateChange(async () => {
   }
 })
 
+// Nettoyage du hash après login
+if (window.location.hash.includes("access_token")) {
+  window.history.replaceState({}, document.title, "/")
+}
+
+// Chargement initial
 const user = await getUser()
 if (user) {
   await createProfileIfNotExists(user)
