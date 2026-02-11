@@ -2,79 +2,81 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Defense Forum - Tickets</title>
+<title>Defense Forum - Auth Custom</title>
 
 <style>
 body {
   font-family: Arial;
   background:#1e1e2f;
   color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
 }
-.container {
-  width: 900px;
-  margin:auto;
+.box {
+  background:#2c2c3f;
+  padding:30px;
+  width:350px;
+  border-radius:10px;
+}
+input {
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+  background:#1a1a28;
+  border:1px solid #444;
+  color:white;
 }
 button {
+  width:100%;
   padding:10px;
   background:#5865F2;
-  color:white;
   border:none;
-  margin:5px 0;
+  color:white;
+  margin-top:10px;
   cursor:pointer;
 }
-input, select, textarea {
-  width:100%;
-  padding:8px;
-  margin:5px 0;
-  background:#2c2c3f;
-  color:white;
-  border:1px solid #444;
+.link {
+  color:#58a6ff;
+  cursor:pointer;
+  font-size:14px;
 }
-.ticket {
-  background:#2c2c3f;
-  padding:15px;
-  margin:15px 0;
-  border-radius:8px;
-}
-.messages {
-  background:#1a1a28;
-  padding:10px;
-  margin-top:10px;
-  border-radius:6px;
+.hidden {
+  display:none;
 }
 </style>
 </head>
 <body>
 
-<div class="container">
+<div class="box">
 
-<h1>🎫 Defense Forum - Système de Tickets</h1>
+<h2 id="title">Connexion</h2>
 
-<button onclick="login()">Connexion Google</button>
-<button onclick="logout()">Déconnexion</button>
+<!-- LOGIN -->
+<div id="loginBox">
+  <input type="text" id="loginUsername" placeholder="Username">
+  <input type="password" id="loginPassword" placeholder="Mot de passe">
+  <button onclick="login()">Se connecter</button>
+  <p class="link" onclick="showRegister()">Pas de compte ? S'inscrire</p>
+</div>
 
-<hr>
+<!-- REGISTER -->
+<div id="registerBox" class="hidden">
+  <input type="text" id="regNom" placeholder="Nom">
+  <input type="text" id="regPrenom" placeholder="Prénom">
+  <input type="text" id="regUsername" placeholder="Username">
+  <input type="password" id="regPassword" placeholder="Mot de passe">
+  <button onclick="register()">Créer un compte</button>
+  <p class="link" onclick="showLogin()">Déjà un compte ? Se connecter</p>
+</div>
 
-<h2>Créer un ticket</h2>
-
-<form id="ticketForm">
-  <input type="text" id="nom" placeholder="Nom" required>
-  <input type="text" id="prenom" placeholder="Prénom" required>
-
-  <select id="raison">
-    <option value="Recrutement">Recrutement</option>
-    <option value="Question Officier">Question Officier</option>
-    <option value="Rapport Interne">Rapport Interne</option>
-    <option value="Permis avion / PPL">Permis avion / PPL</option>
-  </select>
-
-  <button type="submit">Créer Ticket</button>
-</form>
-
-<hr>
-
-<h2>Tickets</h2>
-<div id="tickets"></div>
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+  <h3>Bienvenue <span id="userDisplay"></span></h3>
+  <p>Rôle : <span id="roleDisplay"></span></p>
+  <button onclick="logout()">Déconnexion</button>
+</div>
 
 </div>
 
@@ -86,170 +88,113 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdGF3YmFwb3NuZGZ4aWpreGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzUyNDUsImV4cCI6MjA3OTY1MTI0NX0.tY-CHuyb2zr9s6hlGkwmrdTvg920VVNghI9S45CjwKk"
 )
 
-// ================= LOGIN / LOGOUT =================
+// ================= UI =================
 
-window.login = async function () {
-  await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: "http://localhost:3000"
-    }
-  })
+window.showRegister = function() {
+  document.getElementById("loginBox").classList.add("hidden")
+  document.getElementById("registerBox").classList.remove("hidden")
+  document.getElementById("title").innerText = "Inscription"
 }
 
-window.logout = async function () {
-  await supabase.auth.signOut()
-  window.location.href = "http://localhost:3000"
+window.showLogin = function() {
+  document.getElementById("registerBox").classList.add("hidden")
+  document.getElementById("loginBox").classList.remove("hidden")
+  document.getElementById("title").innerText = "Connexion"
 }
 
-// ================= UTILISATEUR =================
+// ================= REGISTER =================
 
-async function getUser() {
-  const { data } = await supabase.auth.getUser()
-  return data.user
-}
+window.register = async function() {
 
-async function createProfileIfNotExists(user) {
-  const { data } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
+  const nom = document.getElementById("regNom").value
+  const prenom = document.getElementById("regPrenom").value
+  const username = document.getElementById("regUsername").value
+  const password = document.getElementById("regPassword").value
 
-  if (!data || data.length === 0) {
-    await supabase.from("profiles").insert({
-      id: user.id,
-      email: user.email,
-      role: "user"
-    })
-  }
-}
-
-// ================= CREATION TICKET =================
-
-document.getElementById("ticketForm").addEventListener("submit", async (e) => {
-  e.preventDefault()
-
-  const user = await getUser()
-  if (!user) {
-    alert("Connecte-toi d'abord.")
+  if (!nom || !prenom || !username || !password) {
+    alert("Remplis tous les champs")
     return
   }
 
-  const nom = document.getElementById("nom").value
-  const prenom = document.getElementById("prenom").value
-  const raison = document.getElementById("raison").value
+  // Vérifier si username existe déjà
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("username", username)
 
-  const { error } = await supabase.from("tickets").insert({
-    user_id: user.id,
-    nom,
-    prenom,
-    raison
-  })
+  if (existing.length > 0) {
+    alert("Username déjà utilisé")
+    return
+  }
+
+  // Créer profil
+  const { error } = await supabase
+    .from("profiles")
+    .insert({
+      nom,
+      prenom,
+      username,
+      password,
+      role: "user"
+    })
 
   if (error) {
     alert("Erreur : " + error.message)
   } else {
-    alert("Ticket créé avec succès !")
-    loadTickets()
+    alert("Compte créé ! Connecte-toi.")
+    showLogin()
   }
-})
+}
 
-// ================= AFFICHAGE TICKETS =================
+// ================= LOGIN =================
 
-async function loadTickets() {
-  const user = await getUser()
-  if (!user) return
+window.login = async function() {
 
-  const { data, error } = await supabase
-    .from("tickets")
+  const username = document.getElementById("loginUsername").value
+  const password = document.getElementById("loginPassword").value
+
+  const { data } = await supabase
+    .from("profiles")
     .select("*")
-    .order("created_at", { ascending: false })
+    .eq("username", username)
+    .eq("password", password)
 
-  if (error) {
-    console.error(error)
+  if (!data || data.length === 0) {
+    alert("Identifiants incorrects")
     return
   }
 
-  const container = document.getElementById("tickets")
-  container.innerHTML = ""
+  const user = data[0]
 
-  data.forEach(ticket => {
-    const div = document.createElement("div")
-    div.className = "ticket"
+  // Stocker session local
+  localStorage.setItem("user", JSON.stringify(user))
 
-    div.innerHTML = `
-      <b>${ticket.raison}</b><br>
-      ${ticket.nom} ${ticket.prenom}<br>
-      Status: ${ticket.status}<br>
-
-      <div class="messages" id="messages-${ticket.id}"></div>
-
-      <textarea id="msg-${ticket.id}" placeholder="Répondre..."></textarea>
-      <button onclick="sendMessage('${ticket.id}')">Envoyer</button>
-    `
-
-    container.appendChild(div)
-    loadMessages(ticket.id)
-  })
+  showDashboard(user)
 }
 
-// ================= MESSAGES =================
+// ================= DASHBOARD =================
 
-window.sendMessage = async function(ticketId) {
-  const user = await getUser()
-  if (!user) return
+function showDashboard(user) {
+  document.getElementById("loginBox").classList.add("hidden")
+  document.getElementById("registerBox").classList.add("hidden")
+  document.getElementById("dashboard").classList.remove("hidden")
 
-  const textarea = document.getElementById("msg-"+ticketId)
-  const content = textarea.value
-
-  if (!content) return
-
-  await supabase.from("messages").insert({
-    ticket_id: ticketId,
-    sender_id: user.id,
-    content
-  })
-
-  textarea.value = ""
-  loadMessages(ticketId)
+  document.getElementById("userDisplay").innerText = user.username
+  document.getElementById("roleDisplay").innerText = user.role
 }
 
-async function loadMessages(ticketId) {
-  const { data } = await supabase
-    .from("messages")
-    .select("*")
-    .eq("ticket_id", ticketId)
-    .order("created_at", { ascending: true })
-
-  const container = document.getElementById("messages-"+ticketId)
-  container.innerHTML = ""
-
-  data.forEach(msg => {
-    container.innerHTML += `<p>💬 ${msg.content}</p>`
-  })
+window.logout = function() {
+  localStorage.removeItem("user")
+  location.reload()
 }
 
-// ================= AUTH STATE =================
+// ================= AUTO LOGIN =================
 
-supabase.auth.onAuthStateChange(async () => {
-  const user = await getUser()
-  if (user) {
-    await createProfileIfNotExists(user)
-    loadTickets()
-  }
-})
-
-// Nettoyage du hash après login
-if (window.location.hash.includes("access_token")) {
-  window.history.replaceState({}, document.title, "/")
+const savedUser = localStorage.getItem("user")
+if (savedUser) {
+  showDashboard(JSON.parse(savedUser))
 }
 
-// Chargement initial
-const user = await getUser()
-if (user) {
-  await createProfileIfNotExists(user)
-  loadTickets()
-}
 </script>
 
 </body>
