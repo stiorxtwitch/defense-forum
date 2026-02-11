@@ -106,43 +106,50 @@ window.showLogin = function() {
 
 window.register = async function() {
 
-  const nom = document.getElementById("regNom").value
-  const prenom = document.getElementById("regPrenom").value
-  const username = document.getElementById("regUsername").value
-  const password = document.getElementById("regPassword").value
+  const nom = document.getElementById("regNom").value.trim();
+  const prenom = document.getElementById("regPrenom").value.trim();
+  const username = document.getElementById("regUsername").value.trim();
+  const password = document.getElementById("regPassword").value.trim();
 
   if (!nom || !prenom || !username || !password) {
-    alert("Remplis tous les champs")
-    return
+    alert("Remplis tous les champs");
+    return;
   }
 
-  // Vérifier si username existe déjà
-  const { data: existing } = await supabase
+  // Vérifier si username existe
+  const { data: existing, error: errCheck } = await supabase
     .from("profiles")
-    .select("*")
-    .eq("username", username)
+    .select("id")
+    .eq("username", username);
+
+  if (errCheck) {
+    console.error(errCheck);
+    alert("Erreur lors de la vérification");
+    return;
+  }
 
   if (existing.length > 0) {
-    alert("Username déjà utilisé")
-    return
+    alert("Username déjà utilisé");
+    return;
   }
 
-  // Créer profil
-  const { error } = await supabase
+  // Créer le profil
+  const { data, error } = await supabase
     .from("profiles")
-    .insert({
-      nom,
-      prenom,
-      username,
-      password,
+    .insert([{
+      nom: nom,
+      prenom: prenom,
+      username: username,
+      password: password,
       role: "user"
-    })
+    }]);
 
   if (error) {
-    alert("Erreur : " + error.message)
+    console.error(error);
+    alert("Erreur lors de la création du compte");
   } else {
-    alert("Compte créé ! Connecte-toi.")
-    showLogin()
+    alert("Compte créé ! Connecte-toi maintenant.");
+    showLogin();
   }
 }
 
@@ -150,26 +157,29 @@ window.register = async function() {
 
 window.login = async function() {
 
-  const username = document.getElementById("loginUsername").value
-  const password = document.getElementById("loginPassword").value
+  const username = document.getElementById("loginUsername").value.trim();
+  const password = document.getElementById("loginPassword").value.trim();
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("username", username)
-    .eq("password", password)
+    .eq("password", password);
 
-  if (!data || data.length === 0) {
-    alert("Identifiants incorrects")
-    return
+  if (error) {
+    console.error(error);
+    alert("Erreur lors de la connexion");
+    return;
   }
 
-  const user = data[0]
+  if (!data || data.length === 0) {
+    alert("Identifiants incorrects");
+    return;
+  }
 
-  // Stocker session local
-  localStorage.setItem("user", JSON.stringify(user))
-
-  showDashboard(user)
+  const user = data[0];
+  localStorage.setItem("user", JSON.stringify(user));
+  showDashboard(user);
 }
 
 // ================= DASHBOARD =================
